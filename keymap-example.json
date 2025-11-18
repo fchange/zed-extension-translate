@@ -1,0 +1,29 @@
+[
+  {
+    "context": "Editor",
+    "bindings": {
+      // 快捷键：Ctrl+Shift+T - 打开 AI 面板（然后可以使用 /translate 命令）
+      "ctrl-shift-t": "workspace::ToggleRightDock",
+
+      // 快捷键：Ctrl+Shift+P - 打开命令面板
+      "ctrl-shift-p": "command_palette::Toggle",
+
+      // 快捷键：Ctrl+Shift+A - 将选中的文本添加到 AI 上下文
+      "ctrl-shift-a": "agent::AddSelectionToThread"
+    }
+  },
+  {
+    "context": "AssistantPanel",
+    "bindings": {
+      // 在 AI 面板中，按 / 可以快速访问 slash commands
+      // 输入 /translate、/translate-zh 或 /translate-en
+    }
+  },
+  {
+    "context": "Terminal",
+    "bindings": {
+      // 终端中使用不同的快捷键，避免冲突
+      "ctrl-shift-t": null
+    }
+  }
+]

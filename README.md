@@ -70,6 +70,40 @@ Quick command to translate text to English.
 → The weather is really nice today
 ```
 
+## ⌨️ Keyboard Shortcuts Setup
+
+To use translation commands more efficiently, configure keyboard shortcuts in your Zed keymap.
+
+### Quick Setup
+
+1. Open command palette: `Cmd/Ctrl+Shift+P`
+2. Type "zed: open keymap" and press Enter
+3. Add the following configuration to your `keymap.json`:
+
+```json
+[
+  {
+    "context": "Editor",
+    "bindings": {
+      // Open AI panel to use slash commands
+      "ctrl-shift-t": "workspace::ToggleRightDock",
+
+      // Add selected text to AI context
+      "ctrl-alt-t": "agent::AddSelectionToThread"
+    }
+  }
+]
+```
+
+### Recommended Workflow
+
+1. **Select text** you want to translate
+2. **Press** `Ctrl+Shift+T` to open AI panel
+3. **Type** `/translate-zh` or `/translate-en`
+4. **Press** `Enter` to get translation
+
+For more detailed usage instructions, see [USAGE_GUIDE.md](USAGE_GUIDE.md).
+
 ## Supported Languages
 
 - **English** (en)
@@ -125,7 +159,10 @@ zed-extension-translate/
 │   ├── translate.toml
 │   ├── translate-zh.toml
 │   └── translate-en.toml
-└── README.md
+├── keymap-example.json    # Keyboard shortcuts example
+├── USAGE_GUIDE.md         # Detailed usage guide
+├── README.md              # This file
+└── LICENSE                # MIT License
 ```
 
 ## Roadmap
