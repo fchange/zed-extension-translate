@@ -1,32 +1,15 @@
-use serde::{Deserialize, Serialize};
-use std::fs;
-use zed_extension_api::{self as zed, Result, SlashCommand, SlashCommandOutput, SlashCommandOutputSection};
+use zed_extension_api::{self as zed, SlashCommand, SlashCommandOutput, SlashCommandOutputSection, Worktree};
 
-struct TranslateExtension {
-    cached_binary_path: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct TranslationRequest {
-    text: String,
-    source: String,
-    target: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct GoogleTranslateResponse {
-    #[serde(rename = "translatedText")]
-    translated_text: String,
-}
+struct TranslateExtension;
 
 impl TranslateExtension {
-    fn translate_text(&self, text: &str, target_lang: &str) -> Result<String> {
+    fn translate_text(&self, text: &str, target_lang: &str) -> Result<String, String> {
         // 使用 Google Translate API (免费版本，无需 API key)
         // 这里使用简单的 HTTP 请求
-        let encoded_text = urlencoding::encode(text);
-        let url = format!(
+        let _encoded_text = urlencoding::encode(text);
+        let _url = format!(
             "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={}&dt=t&q={}",
-            target_lang, encoded_text
+            target_lang, _encoded_text
         );
 
         // 由于 Zed 扩展的限制，我们在这里使用一个简化的实现
@@ -55,48 +38,39 @@ impl TranslateExtension {
 
 impl zed::Extension for TranslateExtension {
     fn new() -> Self {
-        Self {
-            cached_binary_path: None,
-        }
-    }
-
-    fn slash_command_completions(&mut self, _command: SlashCommand) -> Result<Vec<String>> {
-        Ok(vec![])
+        Self
     }
 
     fn run_slash_command(
-        &mut self,
+        &self,
         command: SlashCommand,
-        _output: &mut dyn zed::io::Write,
-    ) -> Result<SlashCommandOutput> {
+        args: Vec<String>,
+        _worktree: Option<&Worktree>,
+    ) -> Result<SlashCommandOutput, String> {
         match command.name.as_str() {
             "translate" => {
-                let args: Vec<&str> = command.argument.split_whitespace().collect();
-
-                let (target_lang, text) = if args.is_empty() {
-                    ("en", command.argument.trim())
-                } else {
-                    let lang = Self::get_language_code(args[0]);
-                    let remaining_text = args[1..].join(" ");
-                    if remaining_text.is_empty() {
-                        (lang, command.argument.trim())
-                    } else {
-                        (lang, remaining_text.as_str())
-                    }
-                };
-
-                if text.is_empty() {
+                if args.is_empty() {
+                    let error_text = "Usage: /translate [language] <text>\nExample: /translate zh Hello World\nSupported languages: en, zh, ja, ko, fr, de, es, ru, it, pt".to_string();
                     return Ok(SlashCommandOutput {
                         sections: vec![SlashCommandOutputSection {
-                            range: (0..0),
+                            range: (0..error_text.len()).into(),
                             label: "Error".to_string(),
                         }],
-                        text: "Usage: /translate [language] <text>\nExample: /translate zh Hello World\nSupported languages: en, zh, ja, ko, fr, de, es, ru, it, pt".to_string(),
+                        text: error_text,
                     });
                 }
 
+                let (target_lang, text_string) = if args.len() == 1 {
+                    ("en", args[0].clone())
+                } else {
+                    let lang = Self::get_language_code(&args[0]);
+                    let text = args[1..].join(" ");
+                    (lang, text)
+                };
+                let text = text_string.as_str();
+
                 let result = self.translate_text(text, target_lang)
-                    .unwrap_or_else(|e| format!("Translation error: {:?}", e));
+                    .unwrap_or_else(|e| format!("Translation error: {}", e));
 
                 let output_text = format!(
                     "Original: {}\nTarget Language: {}\nTranslation: {}",
@@ -105,57 +79,65 @@ impl zed::Extension for TranslateExtension {
 
                 Ok(SlashCommandOutput {
                     sections: vec![SlashCommandOutputSection {
-                        range: (0..output_text.len()),
+                        range: (0..output_text.len()).into(),
                         label: format!("Translation ({})", target_lang),
                     }],
                     text: output_text,
                 })
             }
             "translate-zh" => {
-                let text = command.argument.trim();
-                if text.is_empty() {
+                if args.is_empty() {
+                    let error_text = "Usage: /translate-zh <text>".to_string();
                     return Ok(SlashCommandOutput {
-                        sections: vec![],
-                        text: "Usage: /translate-zh <text>".to_string(),
+                        sections: vec![SlashCommandOutputSection {
+                            range: (0..error_text.len()).into(),
+                            label: "Error".to_string(),
+                        }],
+                        text: error_text,
                     });
                 }
 
-                let result = self.translate_text(text, "zh-CN")
-                    .unwrap_or_else(|e| format!("Translation error: {:?}", e));
+                let text = args.join(" ");
+                let result = self.translate_text(&text, "zh-CN")
+                    .unwrap_or_else(|e| format!("Translation error: {}", e));
 
                 let output_text = format!("翻译结果: {}", result);
 
                 Ok(SlashCommandOutput {
                     sections: vec![SlashCommandOutputSection {
-                        range: (0..output_text.len()),
+                        range: (0..output_text.len()).into(),
                         label: "Chinese Translation".to_string(),
                     }],
                     text: output_text,
                 })
             }
             "translate-en" => {
-                let text = command.argument.trim();
-                if text.is_empty() {
+                if args.is_empty() {
+                    let error_text = "Usage: /translate-en <text>".to_string();
                     return Ok(SlashCommandOutput {
-                        sections: vec![],
-                        text: "Usage: /translate-en <text>".to_string(),
+                        sections: vec![SlashCommandOutputSection {
+                            range: (0..error_text.len()).into(),
+                            label: "Error".to_string(),
+                        }],
+                        text: error_text,
                     });
                 }
 
-                let result = self.translate_text(text, "en")
-                    .unwrap_or_else(|e| format!("Translation error: {:?}", e));
+                let text = args.join(" ");
+                let result = self.translate_text(&text, "en")
+                    .unwrap_or_else(|e| format!("Translation error: {}", e));
 
                 let output_text = format!("Translation: {}", result);
 
                 Ok(SlashCommandOutput {
                     sections: vec![SlashCommandOutputSection {
-                        range: (0..output_text.len()),
+                        range: (0..output_text.len()).into(),
                         label: "English Translation".to_string(),
                     }],
                     text: output_text,
                 })
             }
-            command => Err(format!("Unknown slash command: {}", command)),
+            cmd => Err(format!("Unknown slash command: {}", cmd)),
         }
     }
 }
