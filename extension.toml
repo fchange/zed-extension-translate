@@ -1,0 +1,7 @@
+id = "translate"
+name = "Translate"
+version = "0.1.0"
+schema_version = 1
+authors = ["Zed Extension Developer"]
+description = "Translation extension for Zed - supports multiple translation engines including Google, DeepL, OpenAI and more"
+repository = "https://github.com/your-username/zed-extension-translate"

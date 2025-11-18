@@ -1,0 +1,4 @@
+name = "translate"
+description = "Translate text to another language"
+tooltip_text = "Translate text to target language. Usage: /translate [language] <text>"
+requires_argument = true

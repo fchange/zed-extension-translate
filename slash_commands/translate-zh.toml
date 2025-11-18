@@ -1,0 +1,4 @@
+name = "translate-zh"
+description = "Translate text to Chinese"
+tooltip_text = "Translate text to Chinese. Usage: /translate-zh <text>"
+requires_argument = true
